@@ -2,8 +2,8 @@
 #define GLOBAL_H
 
 /* includes */
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /* Colors */
 #define KNRM "\033[0m"
