@@ -1,9 +1,10 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-/* includes */
+/* include */
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 /* Colors */
 #define KNRM "\033[0m"

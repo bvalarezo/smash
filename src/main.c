@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 static int usage(char *name);
 
 /* getopt options */
@@ -18,39 +17,39 @@ static int usage(char *name);
 static const char *options = "dh";
 static int d_flag = 0;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     char *script_file = NULL;
     int retval = EXIT_SUCCESS, opt, fd;
-    while((opt = getopt(argc, argv, options)) != -1)
+    while ((opt = getopt(argc, argv, options)) != -1)
     {
-        switch(opt)
+        switch (opt)
         {
-            case HELP:
-                goto fail;
-                break;
-            case DEBUG:
-                d_flag++;
-                break;
-            default:
-                goto fail;
-                break;
+        case HELP:
+            goto fail;
+            break;
+        case DEBUG:
+            d_flag++;
+            break;
+        default:
+            goto fail;
+            break;
         }
     }
     script_file = argv[optind];
-    if(argv[++optind])
+    if (argv[++optind] && script_file)
     {
         fprintf(stderr, KRED "Incorrect argument amount!\nPlease specify no more than one script-file\n" KNRM);
         goto fail;
     }
-    if(script_file)
+    if (script_file)
     {
         /* test for valid file open */
-        if((fd = open(script_file, O_RDONLY)) < 0)
+        if ((fd = open(script_file, O_RDONLY)) < 0)
         {
             retval = EXIT_FAILURE;
-            perror(KRED "Failed to open file\n" KNRM);    
-            goto exit;    
+            perror(KRED "Failed to open file\n" KNRM);
+            goto exit;
         }
         //non-interactive
         retval = batch_smash_init(fd);
@@ -64,11 +63,11 @@ int main(int argc, char* argv[])
 fail:
     retval = usage(argv[0]);
 exit:
-    return retval;
+    exit(retval);
 }
 
 static int usage(char *name)
 {
-    fprintf(stderr, USAGE ,name);
+    fprintf(stderr, USAGE, name);
     return EXIT_FAILURE;
 }
