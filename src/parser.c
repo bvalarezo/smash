@@ -21,6 +21,7 @@ int parseline(const char *prompt, char ***arg_vector, char *delimiters)
     *arg_vector = (char **)calloc(count, sizeof(char *));
     if (!(*arg_vector))
     {
+        perror(KRED "Failed to allocate memory" KNRM);
         free(line);
         return -ENOMEM;
     }
@@ -37,16 +38,16 @@ int parseline(const char *prompt, char ***arg_vector, char *delimiters)
 
 int count_tokens(char *line, char *delimiters)
 {
-    int count = 0, length = strlen(line) + 1;
+    int count = 0;
     char *copy = NULL, *token = NULL, *saveptr = NULL;
 
-    /* allocate a copy */
-    copy = (char *)malloc(length * sizeof(char));
+    /* create a copy */
+    copy = strdup(line);
     if (!copy)
+    {
+        perror(KRED "Failed to allocate memory" KNRM);
         return -ENOMEM;
-
-    /* copy from line */
-    strncpy(copy, line, length);
+    }
 
     /* count the arguments */
     for (token = strtok_r(copy, delimiters, &saveptr);

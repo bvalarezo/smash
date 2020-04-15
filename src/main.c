@@ -11,7 +11,7 @@ static int usage(char *name);
 #define HELP 'h'
 #define DEBUG 'd'
 
-/* Usage Message */
+/* usage Message */
 #define USAGE "Usage: %s [-dh] [script-file]\n"
 
 static const char *options = "dh";
@@ -48,17 +48,18 @@ int main(int argc, char *argv[])
         if ((fd = open(script_file, O_RDONLY)) < 0)
         {
             retval = EXIT_FAILURE;
-            perror(KRED "Failed to open file\n" KNRM);
+            perror(KRED "Failed to open file.\n" KNRM);
             goto exit;
         }
-        //non-interactive
+        /* non-interactive mode */
         retval = batch_smash_init(fd);
     }
     else
     {
-        //interactive
+        /* interactive mode */
         retval = smash_init();
     }
+    //TODO: convert retval from smash to appropriate exit_codes
     goto exit;
 fail:
     retval = usage(argv[0]);

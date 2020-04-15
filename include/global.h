@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 /* Colors */
 #define KNRM "\033[0m"
