@@ -13,6 +13,7 @@ int smash_init()
     {
         /* get the arguments from the line */
         arg_count = parseline(PROMPT, &arg_vector, DELIMITERS);
+
         /* error handle */
         if (arg_count < 0)
         {
@@ -22,6 +23,8 @@ int smash_init()
 
         /* execute command */
         smash_status = smash_execute(arg_count, arg_vector);
+
+        /* clean up */
         if (arg_count > 0)
         {
             /* free the allocation from readline */
@@ -67,9 +70,35 @@ int smash_execute(int arg_count, char **arg_vector)
 int smash_launch(int arg_count, char **arg_vector)
 {
     pid_t pid;
-    int retval = SMASH_RUNNING, background = 0;
+    int retval = SMASH_RUNNING, background = 0, i;
+    //char *line, *saveptr = NULL;
 
     /* check if we have to send the process to the background */
+    for (i = 1; i < arg_count; i++)
+    {
+        /* find the & */
+        if (0 == strcmp(arg_vector[i], "&"))
+        {
+            background++;
+            break;
+        }
+    }
+
+    /* assert proper usage */
+    if (arg_vector[i + 1])
+    {
+        cmd_retval = EINVAL;
+        return retval;
+    }
+
+    // if (merge_args(&line, arg_count, arg_vector, " ") < 0)
+    //     return SMASH_ERROR;
+
+    /* find the & */
+    // if (strtok_r(line, "&", &saveptr))
+    //     background++;
+    // printf("%s\n", line);
+    // printf("%s\n", saveptr);
 
     /* fork a child */
     pid = fork();
@@ -83,16 +112,25 @@ int smash_launch(int arg_count, char **arg_vector)
     {
         /* Child process */
         if (execvp(arg_vector[0], arg_vector) < 0)
-            perror(KRED "Failed to exec process" KNRM);
-        return SMASH_ERROR;
+        {
+            if (errno == ENOENT)
+                fprintf(stderr, "%s: command not found\n", arg_vector[0]);
+            else
+                perror(KRED "Failed to exec process" KNRM);
+            return SMASH_ERROR;
+        }
     }
     else
     {
         /* Parent Process */
+
+        /* Job support */
         if (!background)
             waitpid(pid, NULL, 0);
         else
-            ;
+        {
+            /* add the child process to jobs */
+        }
     }
     return retval;
 }

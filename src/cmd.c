@@ -43,6 +43,7 @@ int smash_cd(int arg_count, char **arg_vector)
 {
     int retval = EXIT_SUCCESS;
     char *dst = NULL;
+
     /* check arguments */
     if (arg_count > 2)
     {

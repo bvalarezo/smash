@@ -10,6 +10,8 @@
 #define JOBS_DONE 2
 
 /* data structures */
+
+/* job data */
 struct job
 {
     char *arg;
@@ -19,6 +21,7 @@ struct job
     int exit_code;
 };
 
+/* job node */
 struct job_node
 {
     struct job data;
@@ -26,5 +29,13 @@ struct job_node
 };
 
 /* prototypes */
+struct job_node *push_job(struct job_node **head, char *arg, pid_t pid, unsigned int job_status);
+struct job_node *pop_job(unsigned int job_id);
+struct job_node *get_job(unsigned int job_id);
+int list_jobs(void);
+
+/* declarations */
+/* tree roots */
+struct job_node *head = NULL;
 
 #endif
