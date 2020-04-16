@@ -14,4 +14,13 @@
 #define KYLW "\033[1;33m"
 #define KBWN "\033[0;33m"
 
+/* argument data*/
+struct argument
+{
+    char *line;
+    int argc;
+    char **argv;
+    int fd_stdin, fd_stdout, fd_stderr;
+    unsigned int background : 1;
+};
 #endif

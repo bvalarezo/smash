@@ -2,6 +2,7 @@
 #define CMD_H
 
 /* includes */
+#include "global.h"
 #include <unistd.h>
 #include <limits.h>
 

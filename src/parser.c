@@ -1,52 +1,118 @@
-#include "global.h"
 #include "parser.h"
 
-int parseline(const char *prompt, char ***arg_vector, char *delimiters)
+int parseline(const char *prompt, struct argument **arg, char *delimiters)
 {
-    int count = 0, i = 0;
-    char *line, *token, *saveptr = NULL, *comment_ptr = NULL;
+    int retval = EXIT_SUCCESS;
+    unsigned int background = 0;
+    int fd_in, fd_out, fd_err, argc = 0, i = 0;
+    char *line = NULL, *in_line = NULL, *token, *saveptr = NULL, *char_ptr = NULL;
+    char **argv;
     /* read in the line */
-    line = readline(prompt);
-    if (!line)
-        return -EXIT_FAILURE;
+    in_line = readline(prompt);
+    if (!in_line)
+    {
+        retval = -ENOMEM;
+        goto fail;
+    }
 
-    /* null the comment out (if any)*/
-    for (comment_ptr = index(line, '#'); comment_ptr != NULL && *comment_ptr != '\0'; comment_ptr++)
-        *comment_ptr = '\0';
+    /* duplicate the readline */
+    line = strdup(in_line);
+    if (!in_line)
+    {
+        retval = -ENOMEM;
+        goto fail;
+    }
+
+    /* parse the comment out (if any)*/
+    for (char_ptr = strchr(line, '#');
+         char_ptr != NULL && *char_ptr != '\0';
+         char_ptr++)
+        *char_ptr = '\0';
 
     /* check if the whole line was a comment */
     if (!line[0])
+    {
+        retval = EXIT_FAILURE;
+        goto fail;
+    }
+
+    /* parse the background character (if any) */
+    if ((char_ptr = strchr(line, '&')))
+    {
+        /* check for syntax error */
+        if (strrchr(line, '&') != char_ptr)
+        {
+            retval = EINVAL;
+            goto fail;
+        }
+        *char_ptr = '\0';
+        background++;
+    }
+
+    /* parse the redirections */
+    if ((retval = parse_redirections(line, &fd_in, &fd_out, &fd_err)) != EXIT_SUCCESS)
         goto fail;
 
     /* count the number of arguments in the line */
-    count = count_tokens(line, delimiters);
-
-    /* error check */
-    if (count < 0)
+    if ((argc = count_tokens(line, delimiters)) < 0)
+    {
+        retval = argc;
         goto fail;
-    if (count == 0)
-        goto fail;
+    }
 
-    /* allocate the arg buffer (vector) */
-    *arg_vector = (char **)calloc(count, sizeof(char *));
-    if (!(*arg_vector))
+    /* syntax error */
+    if (argc == 0 && (background ||
+                      fd_in != STDIN_FILENO ||
+                      fd_out != STDOUT_FILENO ||
+                      fd_err != STDERR_FILENO))
+    {
+        retval = EINVAL;
+        goto fail;
+    }
+
+    /* There is some arguments */
+
+    /* allocate the arg (vector) */
+    argv = (char **)calloc(argc, sizeof(char *));
+    if (!argv)
     {
         perror(KRED "Failed to allocate memory" KNRM);
-        free(line);
-        return -ENOMEM;
+        retval = -ENOMEM;
+        goto fail;
     }
 
     /* parse arguments to buffer */
     token = strtok_r(line, delimiters, &saveptr);
-    for (i = 0; i < count; i++)
+    for (i = 0; i < argc; i++)
     {
-        (*arg_vector)[i] = token;
+        argv[i] = token;
         token = strtok_r(NULL, delimiters, &saveptr);
     }
 
+    /* finally, create the argument struct */
+    *arg = (struct argument *)malloc(sizeof(struct argument));
+    if (!(*arg))
+    {
+        perror(KRED "Failed to allocate memory" KNRM);
+        retval = -ENOMEM;
+        goto fail;
+    }
+    /* write to struct */
+    (*arg)->line = in_line;
+    (*arg)->argc = argc;
+    (*arg)->argv = argv;
+    (*arg)->fd_stdin = fd_in;
+    (*arg)->fd_stdout = fd_out;
+    (*arg)->fd_stderr = fd_err;
+    (*arg)->background = background;
+
 exit:
-    return count;
+    return retval;
 fail:
+    if (argv)
+        free(argv);
+    if (in_line)
+        free(in_line);
     if (line)
         free(line);
     goto exit;
@@ -76,28 +142,189 @@ int count_tokens(char *line, char *delimiters)
     return count;
 }
 
-int merge_args(char **line, int arg_count, char **arg_vector, char *seperator)
+// int merge_args(char **line, int arg_count, char **arg_vector, char *seperator)
+// {
+//     int i, length = 0;
+//     /* get the length */
+//     for (i = 0; i < arg_count; i++)
+//         length += strlen(arg_vector[i]);
+
+//     /* allocate the line */
+//     *line = (char *)malloc(length + (arg_count - 1));
+//     if (!(*line))
+//     {
+//         perror(KRED "Failed to allocate memory" KNRM);
+//         return -ENOMEM;
+//     }
+
+//     /* merge the arguments */
+//     for (i = 0; i < (arg_count - 1); i++)
+//     {
+//         strcat(*line, arg_vector[i]);
+//         strcat(*line, seperator);
+//     }
+//     strcat(*line, arg_vector[i]);
+
+//     return EXIT_SUCCESS;
+// }
+
+// int check_background_argument(int arg_count, char **arg_vector, unsigned int *background)
+// {
+//     int i, retval = EXIT_SUCCESS;
+//     *background = 0;
+
+//     /* check if we have to send the process to the background */
+//     for (i = 1; i < arg_count; i++)
+//     {
+//         /* find the & */
+//         if (0 == strcmp(arg_vector[i], "&"))
+//         {
+//             *background = 1;
+//             break;
+//         }
+//     }
+
+//     /* assert proper usage */
+//     if (arg_vector[i + 1])
+//         retval = -EINVAL;
+
+//     return retval;
+// }
+
+int parse_redirections(char *line, int *fd_in, int *fd_out, int *fd_err)
 {
-    int i, length = 0;
-    /* get the length */
-    for (i = 0; i < arg_count; i++)
-        length += strlen(arg_vector[i]);
+    int retval = EXIT_SUCCESS;
+    char *c, *p;
+    char buf[FILENAME_MAX];
+    size_t len = 0;
+    memset(buf, 0, FILENAME_MAX);
 
-    /* allocate the line */
-    *line = (char *)malloc(length + (arg_count - 1));
-    if (!(*line))
+    /* assign the default fd */
+    *fd_in = STDIN_FILENO;
+    *fd_out = STDOUT_FILENO;
+    *fd_err = STDERR_FILENO;
+    /* parse the entire line */
+    for (c = line; *c != '\0'; c++)
     {
-        perror(KRED "Failed to allocate memory" KNRM);
-        return -ENOMEM;
-    }
+        /* stdin */
+        if (*c == '<')
+        {
+            /* skip whitespace */
+            for (p = c + 1; *p == ' '; p++)
+                ;
 
-    /* merge the arguments */
-    for (i = 0; i < (arg_count - 1); i++)
+            /* read the line to buf for stdin */
+            strncpyd(buf, p, FILENAME_MAX, REDIRECTION_DELIM);
+            len = strlen(buf);
+
+            /* close previous fd_in (overwrite) */
+            if (*fd_in != STDIN_FILENO)
+                close(*fd_in);
+
+            /* open the file */
+            if ((*fd_in = open(buf, O_RDONLY)) < 0)
+            {
+                fprintf(stderr, "%s: %s\n", buf, strerror(errno));
+                retval = errno;
+                goto fail;
+            }
+            /* clear buffer */
+            memset(buf, 0, len);
+            /* write to line whitespace */
+            memset(c, ' ', len + (p - c));
+            /* jump c past the file buffer */
+            c += len + (p - c);
+        }
+        /* stdout */
+        else if (*c == '>')
+        {
+            /* skip whitespace */
+            for (p = c + 1; *p == ' '; p++)
+                ;
+
+            /* read the line to buf for stdout */
+            strncpyd(buf, p, FILENAME_MAX, REDIRECTION_DELIM);
+            len = strlen(buf);
+
+            /* close previous *fd_in (overwrite) */
+            if (*fd_out != STDOUT_FILENO)
+                close(*fd_out);
+
+            /* open the file */
+            if ((*fd_out = open(buf, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
+            {
+                fprintf(stderr, "%s: %s\n", buf, strerror(errno));
+                retval = errno;
+                goto fail;
+            }
+            /* clear buffer */
+            memset(buf, 0, len);
+            /* write to line whitespace */
+            memset(c, ' ', len + (p - c));
+            /* jump c past the file buffer */
+            c += len + (p - c);
+        }
+        /* stderr */
+        else if (*c == '2' && *(c + 1) == '>')
+        {
+            /* skip whitespace */
+            for (p = c + 1; *p == ' '; p++)
+                ;
+
+            /* read the line to buf for stderr */
+            strncpyd(buf, p, FILENAME_MAX, REDIRECTION_DELIM);
+            len = strlen(buf);
+
+            /* close previous *fd_in (overwrite) */
+            if (*fd_err != STDERR_FILENO)
+                close(*fd_err);
+
+            /* open the file */
+            if ((*fd_err = open(buf, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
+            {
+                fprintf(stderr, "%s: %s\n", buf, strerror(errno));
+                retval = errno;
+                goto fail;
+            }
+            /* clear buffer */
+            memset(buf, 0, len);
+            /* write to line whitespace */
+            memset(c, ' ', len + (p - c));
+            /* jump c past the file buffer */
+            c += len + (p - c);
+        }
+    }
+exit:
+    return retval;
+fail:
+    if (*fd_in != STDIN_FILENO)
+        close(*fd_in);
+    if (*fd_out != STDOUT_FILENO)
+        close(*fd_out);
+    if (*fd_err != STDERR_FILENO)
+        close(*fd_err);
+    goto exit;
+}
+
+char *strncpyd(char *dest, const char *src, size_t n, char *delimiter)
+{
+    size_t i;
+
+    for (i = 0; i < n && src[i] != '\0' && !chrpbrk(src[i], delimiter); i++)
     {
-        strcat(*line, arg_vector[i]);
-        strcat(*line, seperator);
+        if (src[i] != ' ')
+            dest[i] = src[i];
     }
-    strcat(*line, arg_vector[i]);
+    for (; i < n; i++)
+        dest[i] = '\0';
 
-    return EXIT_SUCCESS;
+    return dest;
+}
+
+char *chrpbrk(const char c, const char *accept)
+{
+    char buf[2];
+    buf[0] = c;
+    buf[1] = '\0';
+    return strpbrk(buf, accept);
 }

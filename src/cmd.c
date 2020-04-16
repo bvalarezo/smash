@@ -1,4 +1,3 @@
-#include "global.h"
 #include "cmd.h"
 
 const struct cmd cmd_list[] = {
