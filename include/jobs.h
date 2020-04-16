@@ -27,6 +27,7 @@ struct job_node
     unsigned int job_id;
     struct job data;
     struct job_node *next;
+    struct job_node *prev;
 };
 
 /* prototypes */
@@ -34,10 +35,11 @@ int create_job(struct job_node **new_job,
                struct argument *arg,
                pid_t pid,
                unsigned int process_status);
+struct job_node *push_job(struct job_node *new_job);
 struct job_node *pop_job(unsigned int job_id);
 struct job_node *get_job(unsigned int job_id);
 int list_jobs(void);
 
 /* declarations */
-
+#define JOB_FMT "[%s]\t%ld\t%ud\t%s\t%d\n"
 #endif

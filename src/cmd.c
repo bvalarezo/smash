@@ -1,3 +1,4 @@
+#include "jobs.h"
 #include "cmd.h"
 
 const struct cmd cmd_list[] = {
@@ -21,6 +22,7 @@ int smash_jobs(int arg_count, char **arg_vector)
     }
 
     /* list all jobs */
+    list_jobs();
     return retval;
 }
 
