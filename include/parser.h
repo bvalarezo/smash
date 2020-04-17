@@ -23,14 +23,6 @@
 int parseline(const char *prompt, struct argument **arg, char *delimiters);
 /* Count the number of tokens in the line */
 int count_tokens(char *line, char *delimiters);
-/* merge the argument vector to a single line */
-int merge_args(char **line, int arg_count, char **arg_vector, char *seperator);
-
-/* 
- * Checks if the '&' symbol is present. 
- * @return EXIT_SUCCESS or -EXIT_FAILURE
- */
-int check_background_argument(int arg_count, char **arg_vector, unsigned int *background);
 
 /* 
  * Parse for redirection and open proper file descriptors

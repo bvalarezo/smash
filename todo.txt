@@ -1,0 +1,7 @@
+Smash needs to ignore ^C and ^Z from readline [Done]
+add -d flag
+add bg
+add fg 
+add kill
+add echo
+do batch mode

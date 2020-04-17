@@ -4,7 +4,6 @@
 /* includes */
 #include "global.h"
 #include <sys/types.h>
-#include <sys/wait.h>
 
 /* definitions */
 
@@ -17,7 +16,7 @@
 
 /* prototypes */
 
-int smash_init();
+int smash_init(void);
 int batch_smash_init(int fd);
 int smash_execute(struct argument *arg);
 int smash_launch(struct argument *arg);

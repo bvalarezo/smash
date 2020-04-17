@@ -15,7 +15,7 @@ static int usage(char *name);
 #define USAGE "Usage: %s [-dh] [script-file]\n"
 
 static const char *options = "dh";
-static int d_flag = 0;
+int d_flag = 0;
 
 int main(int argc, char *argv[])
 {

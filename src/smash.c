@@ -1,22 +1,30 @@
 #include "parser.h"
+#include "debug.h"
 #include "cmd.h"
 #include "jobs.h"
+#include "wait.h"
+#include "sig.h"
 #include "smash.h"
 
 int cmd_retval = EXIT_SUCCESS;
 
-int smash_init()
+int smash_init(void)
 {
+    enter("%s", "void");
     int smash_status = SMASH_RUNNING, ret;
     struct argument *arg = NULL;
+
+    /* we need to ignore ^C and ^Z */
+    signal_ignore();
     while (smash_status == SMASH_RUNNING)
     {
         /* get the arguments from the line */
-        ret = parseline(PROMPT, &arg, DELIMITERS);
+        ret = parseline(KBLU PROMPT KNRM, &arg, DELIMITERS);
         if (ret < 0)
         {
             /* fatal error */
             smash_status = SMASH_ERROR;
+            fprintf(stdout, "\n");
             break;
         }
         else if (ret > 0)
@@ -29,18 +37,10 @@ int smash_init()
 
         /* execute command */
         smash_status = smash_execute(arg);
-
-        /* clean up */
-        // if (arg_count > 0)
-        // {
-        //     /* free the allocation from readline */
-        //     free(arg_vector[0]);
-        //     /* free the allocation from parseline */
-        //     free(arg_vector);
-        // }
     }
     /* SMASH_EXIT on normal exit */
     /* a negative value on a error */
+    leave("%d", smash_status);
     return smash_status;
 }
 
@@ -52,6 +52,7 @@ int batch_smash_init(int fd)
 
 int smash_execute(struct argument *arg)
 {
+    enter("%p", arg);
     int i;
 
     /* empty arguments */
@@ -75,6 +76,7 @@ int smash_execute(struct argument *arg)
 
 int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
 {
+    enter("%p, %p", builtin_cmd, arg);
     int retval = SMASH_RUNNING;
 
     /* launch the built in command, setting cmd_retval */
@@ -86,11 +88,13 @@ int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
     */
     if (cmd_retval < 0)
         retval = SMASH_ERROR;
+    leave("%d", retval);
     return retval;
 }
 
 int smash_launch(struct argument *arg)
 {
+    enter("%p", arg);
     pid_t pid;
     int retval = SMASH_RUNNING;
     struct job_node *j;
@@ -107,7 +111,7 @@ int smash_launch(struct argument *arg)
     else if (pid == 0)
     {
         /* Child process */
-
+        signal_restore();
         /* perform redirections */
 
         /* Set the standard input/output channels of the new process.  */
@@ -157,14 +161,30 @@ int smash_launch(struct argument *arg)
         /* create a new job */
         if (create_job(&j, arg, pid, PROCESS_RUNNING) < 0)
             ;
+        /* push the job to the active job list */
+        if (!push_job(j))
+            ;
+
         /* Job support */
         if (!arg->background)
-            waitpid(pid, NULL, 0);
+        {
+            /* foreground */
+
+            /* wait for the job to report back */
+            wait_job(j);
+
+            /* job is back */
+        }
         else
         {
-            /* push the job to the active job list */
+            /* background */
+
+            /* printf that we have a new job */
+            printf("[%d]\t%d\n", j->job_id, j->data.pid);
+
+            /* continue as normal */
         }
     }
-
+    leave("%d", retval);
     return retval;
 }

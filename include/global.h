@@ -12,6 +12,10 @@
 #define KRED "\033[1;31m"
 #define KGRN "\033[1;32m"
 #define KYLW "\033[1;33m"
+#define KBLU "\033[1;34m"
+#define KMAG "\033[1;35m"
+#define KCYN "\033[1;36m"
+#define KWHT "\033[1;37m"
 #define KBWN "\033[0;33m"
 
 /* argument data*/

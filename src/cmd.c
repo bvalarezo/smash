@@ -1,4 +1,6 @@
+#include "debug.h"
 #include "jobs.h"
+#include "wait.h"
 #include "cmd.h"
 
 const struct cmd cmd_list[] = {
@@ -12,17 +14,27 @@ const struct cmd cmd_list[] = {
 
 int smash_jobs(int arg_count, char **arg_vector)
 {
+    enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS;
+
+    /* refresh the jobs */
+    refresh_jobs();
 
     /* check arguments */
     if (arg_count > 2)
     {
         fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
-        return EINVAL;
+        retval = EINVAL;
+        goto exit;
     }
 
     /* list all jobs */
     list_jobs();
+
+    /* perform a clean up of DONE/TERMINATED jobs */
+    reap_jobs();
+exit:
+    leave("%d", retval);
     return retval;
 }
 
@@ -90,5 +102,6 @@ int smash_pwd(int arg_count, char **arg_vector)
         printf("%s\n", cwd);
 
     /* return status */
+    leave("%d", retval);
     return retval;
 }

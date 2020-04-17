@@ -11,6 +11,7 @@ int parseline(const char *prompt, struct argument **arg, char *delimiters)
     in_line = readline(prompt);
     if (!in_line)
     {
+        fprintf(stdout, "exit");
         retval = -ENOMEM;
         goto fail;
     }
@@ -141,55 +142,6 @@ int count_tokens(char *line, char *delimiters)
     free(copy);
     return count;
 }
-
-// int merge_args(char **line, int arg_count, char **arg_vector, char *seperator)
-// {
-//     int i, length = 0;
-//     /* get the length */
-//     for (i = 0; i < arg_count; i++)
-//         length += strlen(arg_vector[i]);
-
-//     /* allocate the line */
-//     *line = (char *)malloc(length + (arg_count - 1));
-//     if (!(*line))
-//     {
-//         perror(KRED "Failed to allocate memory" KNRM);
-//         return -ENOMEM;
-//     }
-
-//     /* merge the arguments */
-//     for (i = 0; i < (arg_count - 1); i++)
-//     {
-//         strcat(*line, arg_vector[i]);
-//         strcat(*line, seperator);
-//     }
-//     strcat(*line, arg_vector[i]);
-
-//     return EXIT_SUCCESS;
-// }
-
-// int check_background_argument(int arg_count, char **arg_vector, unsigned int *background)
-// {
-//     int i, retval = EXIT_SUCCESS;
-//     *background = 0;
-
-//     /* check if we have to send the process to the background */
-//     for (i = 1; i < arg_count; i++)
-//     {
-//         /* find the & */
-//         if (0 == strcmp(arg_vector[i], "&"))
-//         {
-//             *background = 1;
-//             break;
-//         }
-//     }
-
-//     /* assert proper usage */
-//     if (arg_vector[i + 1])
-//         retval = -EINVAL;
-
-//     return retval;
-// }
 
 int parse_redirections(char *line, int *fd_in, int *fd_out, int *fd_err)
 {

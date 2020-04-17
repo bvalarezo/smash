@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "jobs.h"
 
 /* head of the jobs list */
@@ -8,6 +9,7 @@ int create_job(struct job_node **new_job,
                pid_t pid,
                unsigned int process_status)
 {
+    enter("%p, %p, %d, %d", new_job, arg, pid, process_status);
     int retval = EXIT_SUCCESS;
     /* allocate memory for node */
     if (!(*new_job = (struct job_node *)calloc(1, sizeof(struct job_node))))
@@ -19,7 +21,28 @@ int create_job(struct job_node **new_job,
     (*new_job)->data.process_status = process_status;
 
     /* push the new node to the list */
+    leave("%d", retval);
     return retval;
+}
+
+void destroy_job(struct job_node *job_node)
+{
+    enter("%p", job_node);
+    /* free the arg's assets */
+    free(job_node->data.arg->line);
+    free(job_node->data.arg->argv);
+    /* close the file descriptors */
+    if (job_node->data.arg->fd_stdin != STDIN_FILENO)
+        close(job_node->data.arg->fd_stdin);
+    if (job_node->data.arg->fd_stdout != STDOUT_FILENO)
+        close(job_node->data.arg->fd_stdout);
+    if (job_node->data.arg->fd_stderr != STDERR_FILENO)
+        close(job_node->data.arg->fd_stderr);
+    /* free the arg */
+    free(job_node->data.arg);
+    /* free the job */
+    free(job_node);
+    leave("%s", "void");
 }
 
 struct job_node *push_job(struct job_node *node)
@@ -38,15 +61,18 @@ struct job_node *push_job(struct job_node *node)
     /* replace head */
     (*h) = node;
 
+    /* assign the job id */
+    if (node->next)
+        node->job_id = node->next->job_id + 1;
+    else
+        node->job_id = 1;
+
     return node;
 }
 
-struct job_node *pop_job(unsigned int job_id)
+struct job_node *pop_job(struct job_node *node)
 {
-    struct job_node **h = &head, *node;
-
-    /* first, we need to find the job_node */
-    node = get_job(job_id);
+    struct job_node **h = &head;
 
     /* error checking */
     if (!(*h) || !node)
@@ -70,35 +96,90 @@ struct job_node *pop_job(unsigned int job_id)
 
 struct job_node *get_job(unsigned int job_id)
 {
-    struct job_node **node = &head;
+    struct job_node *ptr = head;
 
-    while (!(*node))
+    for (; ptr != NULL; ptr = ptr->next)
     {
-        if ((*node)->job_id == job_id)
-            return *node;
-        *node = (*node)->next;
+        if (ptr->job_id == job_id)
+            return ptr;
     }
+    return NULL;
+}
 
+struct job_node *get_job_by_pid(pid_t pid)
+{
+    struct job_node *ptr = head;
+
+    for (; ptr != NULL; ptr = ptr->next)
+    {
+        if (ptr->data.pid == pid)
+            return ptr;
+    }
     return NULL;
 }
 
 int list_jobs(void)
 {
+    enter("%s", "void");
     /* get the head of the list */
-    struct job_node **node = &head;
+    struct job_node *node = head;
 
     /* print header */
     fprintf(stdout, "[%s]\t%s\t%s\t%s\t%s\n", "command", "pid", "job #", "status", "exit code");
 
     /* check if empty */
-    if (!(*node))
-        return EXIT_SUCCESS;
+    if (!node)
+    {
+        leave("%d", EXIT_FAILURE);
+        return EXIT_FAILURE;
+    }
+
     /* go to the tail */
-    for (; (*node)->next != NULL; *node = (*node)->next)
+    for (; node->next != NULL; node = node->next)
         ;
 
     /* print from the tail */
-    for (; (*node)->prev != NULL; *node = (*node)->prev)
-        fprintf(stdout, "hi");
+    for (; node != NULL; node = node->prev)
+    {
+        /* print the background job */
+        if (node->data.arg->background)
+        {
+            fprintf(stdout, JOB_FMT,
+                    node->data.arg->line,
+                    node->data.pid,
+                    node->job_id);
+            /* print the status*/
+            if (node->data.process_status == PROCESS_RUNNING)
+                fprintf(stdout, "Running\t\n");
+            else if (node->data.process_status == PROCESS_STOPPED)
+                fprintf(stdout, "Stopped\t\n");
+            else if (node->data.process_status == PROCESS_DONE)
+            {
+                fprintf(stdout, "Done\t");
+                /* print the exit code */
+                fprintf(stdout, "%d\n", node->data.exit_code);
+            }
+        }
+    }
+    leave("%d", EXIT_SUCCESS);
+    return EXIT_SUCCESS;
+}
+
+int reap_jobs(void)
+{
+    enter("%s", "void");
+    struct job_node *node = head;
+
+    for (; node != NULL; node = node->next)
+    {
+        if (node->data.process_status == PROCESS_DONE || node->data.process_status == PROCESS_TERMINATED)
+        {
+            /* pop this job */
+            pop_job(node);
+            /* destroy this job */
+            destroy_job(node);
+        }
+    }
+    leave("%d", EXIT_SUCCESS);
     return EXIT_SUCCESS;
 }

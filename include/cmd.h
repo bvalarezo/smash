@@ -16,6 +16,8 @@ struct cmd
 };
 
 /* prototypes */
+
+/* list all background running jobs */
 int smash_jobs(int arg_count, char **arg_vector);
 int smash_fg(int arg_count, char **arg_vector);
 int smash_bg(int arg_count, char **arg_vector);
