@@ -1,7 +1,9 @@
 Smash needs to ignore ^C and ^Z from readline [Done]
-add -d flag
-add bg
-add fg 
-add kill
+add -d flag [WIP]
+add bg [Done]
+add ^Z handler [Done]
+add fg [Done?]
+add kill [Done]
 add echo
+add cleanup after exit
 do batch mode

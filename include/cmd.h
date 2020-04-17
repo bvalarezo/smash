@@ -5,6 +5,8 @@
 #include "global.h"
 #include <unistd.h>
 #include <limits.h>
+#include <sys/types.h>
+#include <signal.h>
 
 /* structs */
 
@@ -20,6 +22,7 @@ struct cmd
 /* list all background running jobs */
 int smash_jobs(int arg_count, char **arg_vector);
 int smash_fg(int arg_count, char **arg_vector);
+/* make suspended (stopped) job run in the background.*/
 int smash_bg(int arg_count, char **arg_vector);
 int smash_kill(int arg_count, char **arg_vector);
 /* change the current working directory */

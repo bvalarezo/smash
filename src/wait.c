@@ -43,7 +43,10 @@ int update_job_status(pid_t pid, int status)
     }
     /* update the status */
     if (WIFSTOPPED(status))
+    {
+        j->data.arg->background = 1;
         j->data.process_status = PROCESS_STOPPED;
+    }
     else if (WIFEXITED(status))
     {
         j->data.exit_code = WEXITSTATUS(status);

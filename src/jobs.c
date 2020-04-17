@@ -96,13 +96,18 @@ struct job_node *pop_job(struct job_node *node)
 
 struct job_node *get_job(unsigned int job_id)
 {
+    enter("%d", job_id);
     struct job_node *ptr = head;
 
     for (; ptr != NULL; ptr = ptr->next)
     {
         if (ptr->job_id == job_id)
+        {
+            leave("%p", ptr);
             return ptr;
+        }
     }
+    leave("%s", "null");
     return NULL;
 }
 
@@ -156,6 +161,12 @@ int list_jobs(void)
             else if (node->data.process_status == PROCESS_DONE)
             {
                 fprintf(stdout, "Done\t");
+                /* print the exit code */
+                fprintf(stdout, "%d\n", node->data.exit_code);
+            }
+            else if (node->data.process_status == PROCESS_TERMINATED)
+            {
+                fprintf(stdout, "Terminated\t");
                 /* print the exit code */
                 fprintf(stdout, "%d\n", node->data.exit_code);
             }
