@@ -18,6 +18,9 @@ int smash_init(void)
     signal_ignore();
     while (smash_status == SMASH_RUNNING)
     {
+        /* refresh the jobs */
+        refresh_jobs();
+
         /* get the arguments from the line */
         ret = parseline(KBLU PROMPT KNRM, &arg, DELIMITERS);
         if (ret < 0)
@@ -38,8 +41,10 @@ int smash_init(void)
         /* execute command */
         smash_status = smash_execute(arg);
     }
-    /* SMASH_EXIT on normal exit */
+    /* clean up */
+    destroy_all_jobs();
     /* a negative value on a error */
+    smash_status = (smash_status == SMASH_ERROR) ? EXIT_FAILURE : EXIT_SUCCESS;
     leave("%d", smash_status);
     return smash_status;
 }
@@ -77,17 +82,57 @@ int smash_execute(struct argument *arg)
 int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
 {
     enter("%p, %p", builtin_cmd, arg);
-    int retval = SMASH_RUNNING;
+    int retval = SMASH_RUNNING, cmd_ret = EXIT_SUCCESS;
+    int infile = arg->fd_stdin, outfile = arg->fd_stdout, errfile = arg->fd_stderr;
+    char code[4];
+    memset(code, 0, 4);
 
-    /* launch the built in command, setting cmd_retval */
-    cmd_retval = builtin_cmd(arg->argc, arg->argv);
+    /* set up redirection */
+    if (infile != STDIN_FILENO)
+    {
+        if (dup2(infile, STDIN_FILENO) < 0)
+        {
+            perror(KRED "Failed to change file descriptors" KNRM);
+            retval = SMASH_ERROR;
+        }
+        close(infile);
+    }
+    if (outfile != STDOUT_FILENO)
+    {
+        if (dup2(outfile, STDOUT_FILENO) < 0)
+        {
+            perror(KRED "Failed to change file descriptors" KNRM);
+            retval = SMASH_ERROR;
+        }
+        close(outfile);
+    }
+    if (errfile != STDERR_FILENO)
+    {
+        if (dup2(errfile, STDERR_FILENO) < 0)
+        {
+            perror(KRED "Failed to change file descriptors" KNRM);
+            retval = SMASH_ERROR;
+        }
+        close(errfile);
+    }
+    if (retval == SMASH_ERROR)
+        goto exit;
 
-    /* 
-    * set the smash retval, based on the command retval 
-    * if cmd_retval is negative, this implies a fatal error
-    */
-    if (cmd_retval < 0)
+    /* launch the built in command, setting cmd_ret */
+    cmd_ret = builtin_cmd(arg->argc, arg->argv);
+    /* get the retval from the builtin */
+    if (cmd_ret != EXIT_SUCCESS)
+        cmd_ret = EXIT_FAILURE;
+
+    /* convert the retval to a string*/
+    sprintf(code, "%d", cmd_ret);
+
+    /* set the env */
+    if (setenv("?", code, 1) < 0)
         retval = SMASH_ERROR;
+exit:
+    /* free the arg struct */
+
     leave("%d", retval);
     return retval;
 }

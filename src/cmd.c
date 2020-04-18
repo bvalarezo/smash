@@ -10,15 +10,13 @@ const struct cmd cmd_list[] = {
     {"kill", &smash_kill},
     {"cd", &smash_cd},
     {"pwd", &smash_pwd},
+    {"echo", &smash_echo},
 };
 
 int smash_jobs(int arg_count, char **arg_vector)
 {
     enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS;
-
-    /* refresh the jobs */
-    refresh_jobs();
 
     /* check arguments */
     if (arg_count > 2)
@@ -134,6 +132,7 @@ exit:
 
 int smash_kill(int arg_count, char **arg_vector)
 {
+    enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS, job_num, sig;
     struct job_node *j;
     char *nptr;
@@ -184,6 +183,7 @@ exit:
 
 int smash_cd(int arg_count, char **arg_vector)
 {
+    enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS;
     char *dst = NULL;
 
@@ -212,6 +212,7 @@ int smash_cd(int arg_count, char **arg_vector)
 
 int smash_pwd(int arg_count, char **arg_vector)
 {
+    enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS;
     char cwd[PATH_MAX];
 
@@ -232,6 +233,34 @@ int smash_pwd(int arg_count, char **arg_vector)
         printf("%s\n", cwd);
 
     /* return status */
+    leave("%d", retval);
+    return retval;
+}
+
+int smash_echo(int arg_count, char **arg_vector)
+{
+    enter("%d, %p", arg_count, arg_vector);
+    int retval = EXIT_SUCCESS, i;
+    char *string = NULL;
+    /* perform command */
+    for (i = 1; i < arg_count; i++)
+    {
+        string = arg_vector[i];
+        /* check $ sign if this is a enviornment variable */
+        if (*string == '$' && *(string + 1) != '\0')
+        {
+            string++;
+            /* get the enviornment variable */
+            if ((string = getenv(string)))
+                fprintf(stdout, "%s", string);
+        }
+        else
+        {
+            fprintf(stdout, "%s", string);
+        }
+        fprintf(stdout, " ");
+    }
+    fprintf(stdout, "\n");
     leave("%d", retval);
     return retval;
 }

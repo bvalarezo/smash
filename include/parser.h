@@ -35,6 +35,10 @@ int parse_redirections(char *line, int *fd_in, int *fd_out, int *fd_err);
 char *strncpyd(char *dest, const char *src, size_t n, char *delimiter);
 
 char *chrpbrk(const char c, const char *accept);
+
+/* destroy the arg struct */
+void destroy_arg(struct argument *arg);
+
 /* macros */
 #define REDIRECTION_DELIM " ><"
 

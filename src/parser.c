@@ -1,12 +1,14 @@
+#include "debug.h"
 #include "parser.h"
 
 int parseline(const char *prompt, struct argument **arg, char *delimiters)
 {
+    enter("%s, %p, %s", prompt, arg, delimiters);
     int retval = EXIT_SUCCESS;
     unsigned int background = 0;
     int fd_in, fd_out, fd_err, argc = 0, i = 0;
-    char *line = NULL, *in_line = NULL, *token, *saveptr = NULL, *char_ptr = NULL;
-    char **argv;
+    char *line = NULL, *in_line = NULL, *token = NULL, *saveptr = NULL, *char_ptr = NULL;
+    char **argv = NULL;
     /* read in the line */
     in_line = readline(prompt);
     if (!in_line)
@@ -108,6 +110,7 @@ int parseline(const char *prompt, struct argument **arg, char *delimiters)
     (*arg)->background = background;
 
 exit:
+    leave("%d", retval);
     return retval;
 fail:
     if (argv)
@@ -279,4 +282,20 @@ char *chrpbrk(const char c, const char *accept)
     buf[0] = c;
     buf[1] = '\0';
     return strpbrk(buf, accept);
+}
+
+void destroy_arg(struct argument *arg)
+{
+    /* free the arg's assets */
+    free(arg->line);
+    free(arg->argv);
+    /* close the file descriptors */
+    if (arg->fd_stdin != STDIN_FILENO)
+        close(arg->fd_stdin);
+    if (arg->fd_stdout != STDOUT_FILENO)
+        close(arg->fd_stdout);
+    if (arg->fd_stderr != STDERR_FILENO)
+        close(arg->fd_stderr);
+    /* free the arg */
+    free(arg);
 }

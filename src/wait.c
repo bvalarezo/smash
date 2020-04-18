@@ -32,14 +32,16 @@ int refresh_jobs(void)
 int update_job_status(pid_t pid, int status)
 {
     enter("%d, %d", pid, status);
+    int retval = EXIT_SUCCESS;
     struct job_node *j;
-
+    char code[4];
+    memset(code, 0, 4);
     /* find the job to update */
     j = get_job_by_pid(pid);
     if (!j)
     {
-        leave("%d", EXIT_FAILURE);
-        return EXIT_FAILURE;
+        retval = EXIT_FAILURE;
+        goto exit;
     }
     /* update the status */
     if (WIFSTOPPED(status))
@@ -51,14 +53,28 @@ int update_job_status(pid_t pid, int status)
     {
         j->data.exit_code = WEXITSTATUS(status);
         j->data.process_status = PROCESS_DONE;
+
+        /* convert the status to a string*/
+        sprintf(code, "%d", status);
+
+        /* set the env */
+        if (setenv("?", code, 1) < 0)
+            retval = EXIT_FAILURE;
     }
     else if (WIFSIGNALED(status))
     {
         j->data.exit_code = WTERMSIG(status);
         j->data.process_status = PROCESS_TERMINATED;
+        /* convert the retval to a string*/
+        sprintf(code, "%d", status);
+
+        /* set the env */
+        if (setenv("?", code, 1) < 0)
+            retval = EXIT_FAILURE;
     }
+exit:
     leave("%d", EXIT_SUCCESS);
-    return EXIT_SUCCESS;
+    return retval;
 }
 
 int is_status(struct job_node *j, unsigned int process_status)

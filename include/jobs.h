@@ -44,7 +44,8 @@ struct job_node *get_job(unsigned int job_id);
 struct job_node *get_job_by_pid(pid_t pid);
 int list_jobs(void);
 int reap_jobs(void);
+int destroy_all_jobs(void);
 
 /* declarations */
-#define JOB_FMT "[%s]\t%d\t%d\t"
+#define JOB_FMT "[%d]\t%d\t"
 #endif

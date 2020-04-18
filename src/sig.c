@@ -8,7 +8,7 @@ void sigint_handler(int signal)
     rl_on_new_line();
     rl_replace_line("", 0);
     leave("%s", "void");
-    rl_redisplay();
+    // rl_redisplay();
 }
 
 void signal_ignore(void)

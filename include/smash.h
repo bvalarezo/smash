@@ -24,6 +24,4 @@ int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
 
 /* declarations */
 
-/* Global return value of last command*/
-extern int cmd_retval;
 #endif

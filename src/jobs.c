@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "parser.h"
 #include "jobs.h"
 
 /* head of the jobs list */
@@ -28,18 +29,8 @@ int create_job(struct job_node **new_job,
 void destroy_job(struct job_node *job_node)
 {
     enter("%p", job_node);
-    /* free the arg's assets */
-    free(job_node->data.arg->line);
-    free(job_node->data.arg->argv);
-    /* close the file descriptors */
-    if (job_node->data.arg->fd_stdin != STDIN_FILENO)
-        close(job_node->data.arg->fd_stdin);
-    if (job_node->data.arg->fd_stdout != STDOUT_FILENO)
-        close(job_node->data.arg->fd_stdout);
-    if (job_node->data.arg->fd_stderr != STDERR_FILENO)
-        close(job_node->data.arg->fd_stderr);
     /* free the arg */
-    free(job_node->data.arg);
+    destroy_arg(job_node->data.arg);
     /* free the job */
     free(job_node);
     leave("%s", "void");
@@ -130,7 +121,7 @@ int list_jobs(void)
     struct job_node *node = head;
 
     /* print header */
-    fprintf(stdout, "[%s]\t%s\t%s\t%s\t%s\n", "command", "pid", "job #", "status", "exit code");
+    fprintf(stdout, "%s\t%s\t%s\t%s\t%s\n", "job #", "pid", "status", "exit code", "command");
 
     /* check if empty */
     if (!node)
@@ -150,26 +141,24 @@ int list_jobs(void)
         if (node->data.arg->background)
         {
             fprintf(stdout, JOB_FMT,
-                    node->data.arg->line,
-                    node->data.pid,
-                    node->job_id);
+                    node->job_id,
+                    node->data.pid);
             /* print the status*/
             if (node->data.process_status == PROCESS_RUNNING)
-                fprintf(stdout, "Running\t\n");
+                fprintf(stdout, "Running\t");
             else if (node->data.process_status == PROCESS_STOPPED)
-                fprintf(stdout, "Stopped\t\n");
+                fprintf(stdout, "Stopped\t");
             else if (node->data.process_status == PROCESS_DONE)
-            {
                 fprintf(stdout, "Done\t");
-                /* print the exit code */
-                fprintf(stdout, "%d\n", node->data.exit_code);
-            }
             else if (node->data.process_status == PROCESS_TERMINATED)
-            {
                 fprintf(stdout, "Terminated\t");
-                /* print the exit code */
-                fprintf(stdout, "%d\n", node->data.exit_code);
-            }
+            /* print the exit code */
+            if (node->data.process_status == PROCESS_DONE || node->data.process_status == PROCESS_TERMINATED)
+                fprintf(stdout, "%d\t", node->data.exit_code);
+            else
+                fprintf(stdout, "\t");
+            /* print the command */
+            fprintf(stdout, "\t%s\n", node->data.arg->line);
         }
     }
     leave("%d", EXIT_SUCCESS);
@@ -190,6 +179,22 @@ int reap_jobs(void)
             /* destroy this job */
             destroy_job(node);
         }
+    }
+    leave("%d", EXIT_SUCCESS);
+    return EXIT_SUCCESS;
+}
+
+int destroy_all_jobs(void)
+{
+    enter("%s", "void");
+    struct job_node *node = head;
+
+    for (; node != NULL; node = node->next)
+    {
+        /* pop this job */
+        pop_job(node);
+        /* destroy this job */
+        destroy_job(node);
     }
     leave("%d", EXIT_SUCCESS);
     return EXIT_SUCCESS;
