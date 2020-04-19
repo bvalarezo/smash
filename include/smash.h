@@ -17,7 +17,7 @@
 /* prototypes */
 
 int smash_init(void);
-int batch_smash_init(int fd);
+int batch_smash_init(FILE *fp);
 int smash_execute(struct argument *arg);
 int smash_launch(struct argument *arg);
 int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg);

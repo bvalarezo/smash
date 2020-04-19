@@ -19,7 +19,7 @@ int smash_jobs(int arg_count, char **arg_vector)
     int retval = EXIT_SUCCESS;
 
     /* check arguments */
-    if (arg_count > 2)
+    if (arg_count > 1)
     {
         fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
         retval = EINVAL;
@@ -43,9 +43,12 @@ int smash_fg(int arg_count, char **arg_vector)
     int job_num, job_status;
     struct job_node *j;
     /* check arguments */
-    if (arg_count > 2)
+    if (arg_count != 2)
     {
-        fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
+        if (arg_count > 2)
+            fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
+        else
+            fprintf(stderr, "%s: invalid usage\n", arg_vector[0]);
         retval = EINVAL;
         goto exit;
     }
@@ -90,9 +93,12 @@ int smash_bg(int arg_count, char **arg_vector)
     int job_num, job_status;
     struct job_node *j;
     /* check arguments */
-    if (arg_count > 2)
+    if (arg_count != 2)
     {
-        fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
+        if (arg_count > 2)
+            fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
+        else
+            fprintf(stderr, "%s: invalid usage\n", arg_vector[0]);
         retval = EINVAL;
         goto exit;
     }
@@ -137,9 +143,12 @@ int smash_kill(int arg_count, char **arg_vector)
     struct job_node *j;
     char *nptr;
     /* check arguments */
-    if (arg_count > 3)
+    if (arg_count != 3)
     {
-        fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
+        if (arg_count > 3)
+            fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
+        else
+            fprintf(stderr, "%s: invalid usage\n", arg_vector[0]);
         retval = EINVAL;
         goto exit;
     }

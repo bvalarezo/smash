@@ -8,10 +8,10 @@ add echo [DONE]
 the $? variable [DONE]
 add cleanup after exit [Done]
 setup redirection for builtins[Done]
+do batch mode [Done]
 
 [TODO]
 do -d flag [WIP]
-do batch mode
 fix proper exit codes
 
     1 - Catchall for general errors

@@ -13,7 +13,7 @@ int smash_init(void)
     enter("%s", "void");
     int smash_status = SMASH_RUNNING, ret;
     struct argument *arg = NULL;
-
+    char *line;
     /* we need to ignore ^C and ^Z */
     signal_ignore();
     while (smash_status == SMASH_RUNNING)
@@ -21,8 +21,16 @@ int smash_init(void)
         /* refresh the jobs */
         refresh_jobs();
 
+        /* read in the line */
+        line = readline(KBLU PROMPT KNRM);
+        if (!line)
+        {
+            smash_status = SMASH_EXIT;
+            fprintf(stdout, "exit\n");
+            break;
+        }
         /* get the arguments from the line */
-        ret = parseline(KBLU PROMPT KNRM, &arg, DELIMITERS);
+        ret = parseline(line, &arg, DELIMITERS);
         if (ret < 0)
         {
             /* fatal error */
@@ -43,16 +51,57 @@ int smash_init(void)
     }
     /* clean up */
     destroy_all_jobs();
-    /* a negative value on a error */
+    /* set the proper return value */
     smash_status = (smash_status == SMASH_ERROR) ? EXIT_FAILURE : EXIT_SUCCESS;
     leave("%d", smash_status);
     return smash_status;
 }
 
-int batch_smash_init(int fd)
+int batch_smash_init(FILE *fp)
 {
-    close(fd);
-    return 0;
+    enter("%p", fp);
+    int smash_status = SMASH_RUNNING, ret;
+    size_t len;
+    struct argument *arg = NULL;
+    char *line;
+    while (smash_status == SMASH_RUNNING)
+    {
+        /* refresh the jobs */
+        refresh_jobs();
+
+        /* read in the line */
+        if (getline(&line, &len, fp) < 0)
+        {
+            smash_status = SMASH_EXIT;
+            break;
+        }
+        /* get the arguments from the line */
+        ret = parseline(line, &arg, DELIMITERS);
+        if (ret < 0)
+        {
+            /* fatal error */
+            smash_status = SMASH_ERROR;
+            fprintf(stdout, "\n");
+            break;
+        }
+        else if (ret > 0)
+        {
+            /* parsing error */
+            if (ret == EINVAL)
+                fprintf(stderr, "syntax error\n");
+            continue;
+        }
+
+        /* execute command */
+        smash_status = smash_execute(arg);
+    }
+    /* clean up */
+    destroy_all_jobs();
+    /* set the proper return value */
+    smash_status = (smash_status == SMASH_ERROR) ? EXIT_FAILURE : EXIT_SUCCESS;
+    fclose(fp);
+    leave("%d", smash_status);
+    return smash_status;
 }
 
 int smash_execute(struct argument *arg)

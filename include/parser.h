@@ -20,7 +20,8 @@
  * 
  * @return EXIT_SUCCESS or negative error code
  */
-int parseline(const char *prompt, struct argument **arg, char *delimiters);
+int parseline(char *in_line, struct argument **arg, char *delimiters);
+
 /* Count the number of tokens in the line */
 int count_tokens(char *line, char *delimiters);
 

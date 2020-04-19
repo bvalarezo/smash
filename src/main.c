@@ -20,7 +20,8 @@ int d_flag = 0;
 int main(int argc, char *argv[])
 {
     char *script_file = NULL;
-    int retval = EXIT_SUCCESS, opt, fd;
+    int retval = EXIT_SUCCESS, opt;
+    FILE *fp;
     while ((opt = getopt(argc, argv, options)) != -1)
     {
         switch (opt)
@@ -45,14 +46,14 @@ int main(int argc, char *argv[])
     if (script_file)
     {
         /* test for valid file open */
-        if ((fd = open(script_file, O_RDONLY)) < 0)
+        if (!(fp = fopen(script_file, "r")))
         {
             retval = EXIT_FAILURE;
             perror(KRED "Failed to open file.\n" KNRM);
             goto exit;
         }
         /* non-interactive mode */
-        retval = batch_smash_init(fd);
+        retval = batch_smash_init(fp);
     }
     else
     {

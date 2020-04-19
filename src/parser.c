@@ -1,26 +1,17 @@
 #include "debug.h"
 #include "parser.h"
 
-int parseline(const char *prompt, struct argument **arg, char *delimiters)
+int parseline(char *in_line, struct argument **arg, char *delimiters)
 {
-    enter("%s, %p, %s", prompt, arg, delimiters);
+    enter("%s, %p, %s", in_line, arg, delimiters);
     int retval = EXIT_SUCCESS;
     unsigned int background = 0;
     int fd_in, fd_out, fd_err, argc = 0, i = 0;
-    char *line = NULL, *in_line = NULL, *token = NULL, *saveptr = NULL, *char_ptr = NULL;
+    char *line = NULL, *token = NULL, *saveptr = NULL, *char_ptr = NULL;
     char **argv = NULL;
-    /* read in the line */
-    in_line = readline(prompt);
-    if (!in_line)
-    {
-        fprintf(stdout, "exit");
-        retval = -ENOMEM;
-        goto fail;
-    }
-
     /* duplicate the readline */
     line = strdup(in_line);
-    if (!in_line)
+    if (!line)
     {
         retval = -ENOMEM;
         goto fail;
