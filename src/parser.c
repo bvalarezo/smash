@@ -115,6 +115,7 @@ fail:
 
 int count_tokens(char *line, char *delimiters)
 {
+    enter("%s, %s", line, delimiters);
     int count = 0;
     char *copy = NULL, *token = NULL, *saveptr = NULL;
 
@@ -122,8 +123,8 @@ int count_tokens(char *line, char *delimiters)
     copy = strdup(line);
     if (!copy)
     {
-        perror(KRED "Failed to allocate memory" KNRM);
-        return -ENOMEM;
+        count = -ENOMEM;
+        goto exit;
     }
 
     /* count the arguments */
@@ -134,11 +135,14 @@ int count_tokens(char *line, char *delimiters)
 
     /* clean up and return */
     free(copy);
+exit:
+    leave("%d", count);
     return count;
 }
 
 int parse_redirections(char *line, int *fd_in, int *fd_out, int *fd_err)
 {
+    enter("%s, %p, %p, %p", line, fd_in, fd_out, fd_err);
     int retval = EXIT_SUCCESS;
     char *c, *p;
     char buf[FILENAME_MAX];
@@ -241,6 +245,7 @@ int parse_redirections(char *line, int *fd_in, int *fd_out, int *fd_err)
         }
     }
 exit:
+    leave("%d", retval);
     return retval;
 fail:
     if (*fd_in != STDIN_FILENO)
@@ -254,6 +259,7 @@ fail:
 
 char *strncpyd(char *dest, const char *src, size_t n, char *delimiter)
 {
+    enter("%s, %s, %lu, %s", dest, src, n, delimiter);
     size_t i;
 
     for (i = 0; i < n && src[i] != '\0' && !chrpbrk(src[i], delimiter); i++)
@@ -261,9 +267,9 @@ char *strncpyd(char *dest, const char *src, size_t n, char *delimiter)
         if (src[i] != ' ')
             dest[i] = src[i];
     }
-    for (; i < n; i++)
-        dest[i] = '\0';
+    dest[i] = '\0';
 
+    leave("%s", dest);
     return dest;
 }
 
@@ -277,6 +283,7 @@ char *chrpbrk(const char c, const char *accept)
 
 void destroy_arg(struct argument *arg)
 {
+    enter("%p", arg);
     /* free the arg's assets */
     free(arg->line);
     free(arg->argv);
@@ -289,4 +296,5 @@ void destroy_arg(struct argument *arg)
         close(arg->fd_stderr);
     /* free the arg */
     free(arg);
+    leave("%s", "void");
 }

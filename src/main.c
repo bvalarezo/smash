@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 {
     char *script_file = NULL;
     int retval = EXIT_SUCCESS, opt;
-    FILE *fp;
+    FILE *fp = NULL;
     while ((opt = getopt(argc, argv, options)) != -1)
     {
         switch (opt)

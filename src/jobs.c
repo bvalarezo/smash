@@ -14,14 +14,16 @@ int create_job(struct job_node **new_job,
     int retval = EXIT_SUCCESS;
     /* allocate memory for node */
     if (!(*new_job = (struct job_node *)calloc(1, sizeof(struct job_node))))
-        return -ENOMEM;
-
+    {
+        retval = -ENOMEM;
+        goto exit;
+    }
     /* fill in fields */
     (*new_job)->data.arg = arg;
     (*new_job)->data.pid = pid;
     (*new_job)->data.process_status = process_status;
 
-    /* push the new node to the list */
+exit:
     leave("%d", retval);
     return retval;
 }
@@ -38,6 +40,7 @@ void destroy_job(struct job_node *job_node)
 
 struct job_node *push_job(struct job_node *node)
 {
+    enter("%p", node);
     /* get the head of the list */
     struct job_node **h = &head;
 
@@ -58,17 +61,21 @@ struct job_node *push_job(struct job_node *node)
     else
         node->job_id = 1;
 
+    leave("%p", node);
     return node;
 }
 
 struct job_node *pop_job(struct job_node *node)
 {
+    enter("%p", node);
     struct job_node **h = &head;
 
     /* error checking */
     if (!(*h) || !node)
+    {
+        leave("%p", "null");
         return NULL;
-
+    }
     /* node to be popped is head */
     if (*h == node)
         *h = node->next;
@@ -82,6 +89,7 @@ struct job_node *pop_job(struct job_node *node)
         node->prev->next = node->next;
 
     /* return the popped node */
+    leave("%p", node);
     return node;
 }
 
@@ -104,13 +112,18 @@ struct job_node *get_job(unsigned int job_id)
 
 struct job_node *get_job_by_pid(pid_t pid)
 {
+    enter("%d", pid);
     struct job_node *ptr = head;
 
     for (; ptr != NULL; ptr = ptr->next)
     {
         if (ptr->data.pid == pid)
+        {
+            leave("%p", ptr);
             return ptr;
+        }
     }
+    leave("%s", "null");
     return NULL;
 }
 

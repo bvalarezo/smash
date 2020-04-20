@@ -80,6 +80,7 @@ int smash_fg(int arg_count, char **arg_vector)
         kill(j->data.pid, SIGCONT);
 
     /* send the job to the foreground */
+    j->data.arg->background = 0;
     wait_job(j);
 exit:
     leave("%d", retval);
@@ -130,6 +131,7 @@ int smash_bg(int arg_count, char **arg_vector)
 
     /* update the status */
     j->data.process_status = PROCESS_RUNNING;
+    j->data.arg->background = 1;
 
 exit:
     leave("%d", retval);
@@ -187,6 +189,7 @@ int smash_kill(int arg_count, char **arg_vector)
     }
 
 exit:
+    leave("%d", retval);
     return retval;
 }
 
@@ -200,7 +203,8 @@ int smash_cd(int arg_count, char **arg_vector)
     if (arg_count > 2)
     {
         fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
-        return EINVAL;
+        retval = EINVAL;
+        goto exit;
     }
 
     /* get destination */
@@ -216,6 +220,8 @@ int smash_cd(int arg_count, char **arg_vector)
         fprintf(stderr, "%s: %s: %s\n", arg_vector[0], dst, strerror(errno));
         retval = errno;
     }
+exit:
+    leave("%d", retval);
     return retval;
 }
 
@@ -229,7 +235,8 @@ int smash_pwd(int arg_count, char **arg_vector)
     if (arg_count > 1)
     {
         fprintf(stderr, "%s: too many arguments\n", arg_vector[0]);
-        return EINVAL;
+        retval = EINVAL;
+        goto exit;
     }
 
     /* perform command */
@@ -241,7 +248,7 @@ int smash_pwd(int arg_count, char **arg_vector)
     else
         printf("%s\n", cwd);
 
-    /* return status */
+exit:
     leave("%d", retval);
     return retval;
 }

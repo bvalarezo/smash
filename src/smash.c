@@ -22,7 +22,7 @@ int smash_init(void)
         refresh_jobs();
 
         /* read in the line */
-        line = readline(KBLU PROMPT KNRM);
+        line = readline(KGRN PROMPT KNRM);
         if (!line)
         {
             smash_status = SMASH_EXIT;
@@ -107,6 +107,7 @@ int batch_smash_init(FILE *fp)
 int smash_execute(struct argument *arg)
 {
     enter("%p", arg);
+    execute(arg->line);
     int i;
 
     /* empty arguments */
@@ -181,7 +182,7 @@ int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
         retval = SMASH_ERROR;
 exit:
     /* free the arg struct */
-
+    destroy_arg(arg);
     leave("%d", retval);
     return retval;
 }
@@ -254,10 +255,13 @@ int smash_launch(struct argument *arg)
 
         /* create a new job */
         if (create_job(&j, arg, pid, PROCESS_RUNNING) < 0)
-            ;
+        {
+            perror(KRED "Failed to allocate memory" KNRM);
+            retval = SMASH_ERROR;
+            goto exit;
+        }
         /* push the job to the active job list */
-        if (!push_job(j))
-            ;
+        push_job(j);
 
         /* Job support */
         if (!arg->background)
@@ -279,6 +283,7 @@ int smash_launch(struct argument *arg)
             /* continue as normal */
         }
     }
+exit:
     leave("%d", retval);
     return retval;
 }

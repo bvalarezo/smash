@@ -1,10 +1,14 @@
 #include "debug.h"
 #include "sig.h"
 
+void sigchld_handler(int sig, siginfo_t *info, void *ucontext)
+{
+}
+
 void sigint_handler(int signal)
 {
     fprintf(stdout, "\n");
-    enter("%s", "void");
+    enter("%d", signal);
     rl_on_new_line();
     rl_replace_line("", 0);
     leave("%s", "void");

@@ -9,9 +9,9 @@ the $? variable [DONE]
 add cleanup after exit [Done]
 setup redirection for builtins[Done]
 do batch mode [Done]
+do -d flag [DONE]
 
 [TODO]
-do -d flag [WIP]
 fix proper exit codes
 
     1 - Catchall for general errors
@@ -23,3 +23,5 @@ fix proper exit codes
     130 - Script terminated by Control-C
     255\* - Exit status out of range
 
+consider rework on sync vs async
+-sigchld_handler calling waitpid

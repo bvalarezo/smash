@@ -49,31 +49,29 @@ int update_job_status(pid_t pid, int status)
         j->data.arg->background = 1;
         j->data.process_status = PROCESS_STOPPED;
     }
-    else if (WIFEXITED(status))
+    else
     {
-        j->data.exit_code = WEXITSTATUS(status);
-        j->data.process_status = PROCESS_DONE;
-
+        /* process terminated */
+        if (WIFEXITED(status))
+        {
+            j->data.exit_code = WEXITSTATUS(status);
+            j->data.process_status = PROCESS_DONE;
+        }
+        else if (WIFSIGNALED(status))
+        {
+            j->data.exit_code = WTERMSIG(status);
+            j->data.process_status = PROCESS_TERMINATED;
+        }
         /* convert the status to a string*/
         sprintf(code, "%d", status);
 
         /* set the env */
         if (setenv("?", code, 1) < 0)
             retval = EXIT_FAILURE;
-    }
-    else if (WIFSIGNALED(status))
-    {
-        j->data.exit_code = WTERMSIG(status);
-        j->data.process_status = PROCESS_TERMINATED;
-        /* convert the retval to a string*/
-        sprintf(code, "%d", status);
-
-        /* set the env */
-        if (setenv("?", code, 1) < 0)
-            retval = EXIT_FAILURE;
+        end(j->data.arg->line, j->data.exit_code);
     }
 exit:
-    leave("%d", EXIT_SUCCESS);
+    leave("%d", retval);
     return retval;
 }
 
