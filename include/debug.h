@@ -36,4 +36,11 @@ extern int d_flag;
             fprintf(stderr, KCYN "ENDED: \"<%s>\" (ret=%d)\n" KNRM, cmd, ret); \
     } while (0)
 
+#define debug(msg, ...)                                       \
+    do                                                        \
+    {                                                         \
+        if (d_flag)                                           \
+            fprintf(stderr, KBWN msg "\n" KNRM, __VA_ARGS__); \
+    } while (0)
+
 #endif

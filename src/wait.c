@@ -4,27 +4,13 @@
 int wait_job(struct job_node *j)
 {
     enter("%p", j);
-    int status;
-    pid_t wpid;
+    int status = 0;
+    pid_t wpid = 0;
     do
     {
-        /* wait for any process to reply */
-        wpid = waitpid(-1, &status, WUNTRACED);
+        /* wait for the job to reply */
+        wpid = waitpid(j->data.pid, &status, WUNTRACED);
     } while (!update_job_status(wpid, status) && is_status(j, PROCESS_RUNNING));
-    leave("%d", EXIT_SUCCESS);
-    return EXIT_SUCCESS;
-}
-
-int refresh_jobs(void)
-{
-    enter("%s", "void");
-    int status;
-    pid_t wpid;
-    do
-    {
-        /* wait for any process to reply */
-        wpid = waitpid(-1, &status, WUNTRACED | WNOHANG);
-    } while (!update_job_status(wpid, status));
     leave("%d", EXIT_SUCCESS);
     return EXIT_SUCCESS;
 }
@@ -59,13 +45,14 @@ int update_job_status(pid_t pid, int status)
         }
         else if (WIFSIGNALED(status))
         {
-            j->data.exit_code = WTERMSIG(status);
+            j->data.exit_code = 128 + WTERMSIG(status);
             j->data.process_status = PROCESS_TERMINATED;
         }
         /* convert the status to a string*/
-        sprintf(code, "%d", status);
+        snprintf(code, 4, "%d", j->data.exit_code);
 
         /* set the env */
+        debug("$? will be %s", code);
         if (setenv("?", code, 1) < 0)
             retval = EXIT_FAILURE;
         end(j->data.arg->line, j->data.exit_code);

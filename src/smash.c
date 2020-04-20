@@ -19,7 +19,7 @@ int smash_init(void)
     while (smash_status == SMASH_RUNNING)
     {
         /* refresh the jobs */
-        refresh_jobs();
+        //refresh_jobs();
 
         /* read in the line */
         line = readline(KGRN PROMPT KNRM);
@@ -67,7 +67,7 @@ int batch_smash_init(FILE *fp)
     while (smash_status == SMASH_RUNNING)
     {
         /* refresh the jobs */
-        refresh_jobs();
+        //refresh_jobs();
 
         /* read in the line */
         if (getline(&line, &len, fp) < 0)
@@ -172,12 +172,13 @@ int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
     cmd_ret = builtin_cmd(arg->argc, arg->argv);
     /* get the retval from the builtin */
     if (cmd_ret != EXIT_SUCCESS)
-        cmd_ret = EXIT_FAILURE;
+        cmd_ret = EXIT_FAILURE + 1;
 
+    end(arg->line, cmd_ret);
     /* convert the retval to a string*/
-    sprintf(code, "%d", cmd_ret);
-
+    snprintf(code, 4, "%d", cmd_ret);
     /* set the env */
+    debug("$? will be %s", code);
     if (setenv("?", code, 1) < 0)
         retval = SMASH_ERROR;
 exit:
@@ -240,14 +241,22 @@ int smash_launch(struct argument *arg)
         /* check for an error */
 
         /* execute the new process */
+        debug("Entering... execvp(%s, %p)", arg->argv[0], arg->argv);
         if (execvp(arg->argv[0], arg->argv) < 0)
         {
+            debug("Leaving... execvp with retval=(%d)", errno);
             if (errno == ENOENT)
+            {
                 fprintf(stderr, "%s: command not found\n", arg->argv[0]);
+                retval = 127;
+            }
             else
+            {
                 perror(KRED "Failed to exec process" KNRM);
+                retval = 126;
+            }
         }
-        exit(EXIT_FAILURE);
+        exit(retval);
     }
     else
     {

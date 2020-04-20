@@ -10,18 +10,10 @@ add cleanup after exit [Done]
 setup redirection for builtins[Done]
 do batch mode [Done]
 do -d flag [DONE]
+consider rework on sync vs async [DONE]
+-sigchld_handler calling waitpid
+fix proper exit codes[DONE]
 
 [TODO]
-fix proper exit codes
-
-    1 - Catchall for general errors
-    2 - Misuse of shell builtins (according to Bash documentation)
-    126 - Command invoked cannot execute
-    127 - “command not found”
-    128 - Invalid argument to exit
-    128+n - Fatal error signal “n”
-    130 - Script terminated by Control-C
-    255\* - Exit status out of range
-
-consider rework on sync vs async
--sigchld_handler calling waitpid
+README
+test scripts
