@@ -9,9 +9,10 @@
 /* definitions */
 
 /* prototypes */
+void sigchld_handler(int signal);
 void sigint_handler(int signal);
-void signal_ignore(void);
-void signal_restore(void);
+int signal_init(void);
+int signal_restore(void);
 
 /* declarations */
 

@@ -5,8 +5,8 @@
 void sigchld_handler(int signal)
 {
     enter("%d", signal);
-    int status;
-    pid_t wpid;
+    int status = 0;
+    pid_t wpid = 0;
     /* wait for any child to reply */
     while ((wpid = waitpid(-1, &status, WNOHANG)) > 0)
     {
@@ -30,8 +30,9 @@ void sigint_handler(int signal)
     leave("%s", "void");
 }
 
-void signal_ignore(void)
+int signal_init(void)
 {
+    int retval = -EXIT_FAILURE;
     enter("%s", "void");
     struct sigaction sigint_action = {
         .sa_handler = &sigint_handler,
@@ -41,19 +42,34 @@ void signal_ignore(void)
         .sa_flags = 0};
     sigemptyset(&sigint_action.sa_mask);
     sigemptyset(&sigchld_action.sa_mask);
-    sigaction(SIGINT, &sigint_action, NULL);
-    sigaction(SIGCHLD, &sigchld_action, NULL);
-    signal(SIGQUIT, SIG_IGN);
-    signal(SIGTSTP, SIG_IGN);
-    leave("%s", "void");
+    if (sigaction(SIGINT, &sigint_action, NULL) < 0)
+        goto exit;
+    if (sigaction(SIGCHLD, &sigchld_action, NULL) < 0)
+        goto exit;
+    if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
+        goto exit;
+    if (signal(SIGTSTP, SIG_IGN) == SIG_ERR)
+        goto exit;
+    retval = EXIT_SUCCESS;
+exit:
+    leave("%d", retval);
+    return retval;
 }
 
-void signal_restore(void)
+int signal_restore(void)
 {
+    int retval = -EXIT_FAILURE;
     enter("%s", "void");
-    signal(SIGINT, SIG_DFL);
-    signal(SIGQUIT, SIG_DFL);
-    signal(SIGTSTP, SIG_DFL);
-    signal(SIGCHLD, SIG_DFL);
-    leave("%s", "void");
+    if (signal(SIGINT, SIG_DFL) == SIG_ERR)
+        goto exit;
+    if (signal(SIGQUIT, SIG_DFL) == SIG_ERR)
+        goto exit;
+    if (signal(SIGTSTP, SIG_DFL) == SIG_ERR)
+        goto exit;
+    if (signal(SIGCHLD, SIG_DFL) == SIG_ERR)
+        goto exit;
+    retval = EXIT_SUCCESS;
+exit:
+    leave("%d", retval);
+    return retval;
 }

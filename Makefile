@@ -33,6 +33,9 @@ $(BLDD)/%.o: $(SRCD)/%.c
 clean:
 	$(RM) -r $(BLDD) $(EXEC)
 
-tests: $(EXEC) $(ALL_TESTS)
-	for i in $(ALL_TESTS); do \
+test: all $(ALL_TESTS)
+	for i in $(ALL_TESTS); do \ 
 		/bin/bash $$i; done
+
+.PRECIOUS: $(BLDD)/*.d 
+-include $(BLDD)/*.d 

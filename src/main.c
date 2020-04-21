@@ -41,6 +41,13 @@ int main(int argc, char *argv[])
     if (argv[++optind] && script_file)
     {
         fprintf(stderr, KRED "Incorrect argument amount!\nPlease specify no more than one script-file\n" KNRM);
+        retval = EXIT_FAILURE;
+        goto fail;
+    }
+    if (setenv("SHELL", "smash", 1) < 0)
+    {
+        perror(KRED "Failed to set env variable" KNRM);
+        retval = EXIT_FAILURE;
         goto fail;
     }
     if (script_file)
@@ -49,7 +56,7 @@ int main(int argc, char *argv[])
         if (!(fp = fopen(script_file, "r")))
         {
             retval = EXIT_FAILURE;
-            perror(KRED "Failed to open file.\n" KNRM);
+            perror(KRED "Failed to open file" KNRM);
             goto exit;
         }
         /* non-interactive mode */
@@ -70,6 +77,6 @@ exit:
 
 static int usage(char *name)
 {
-    fprintf(stderr, USAGE, name);
+    fprintf(stdout, USAGE, name);
     return EXIT_FAILURE;
 }

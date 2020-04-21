@@ -15,7 +15,11 @@ int smash_init(void)
     struct argument *arg = NULL;
     char *line;
     /* we need to ignore ^C and ^Z */
-    signal_ignore();
+    if (signal_init() < 0)
+    {
+        perror("Failed to change signal action");
+        smash_status = SMASH_ERROR;
+    }
     while (smash_status == SMASH_RUNNING)
     {
         /* refresh the jobs */
@@ -43,6 +47,8 @@ int smash_init(void)
             /* parsing error */
             if (ret == EINVAL)
                 fprintf(stderr, "syntax error\n");
+            if (setenv("?", "2", 1) < 0)
+                smash_status = SMASH_ERROR;
             continue;
         }
 
@@ -64,6 +70,12 @@ int batch_smash_init(FILE *fp)
     size_t len;
     struct argument *arg = NULL;
     char *line;
+    /* we need to ignore ^C and ^Z */
+    if (signal_init() < 0)
+    {
+        perror("Failed to change signal action");
+        smash_status = SMASH_ERROR;
+    }
     while (smash_status == SMASH_RUNNING)
     {
         /* refresh the jobs */
@@ -89,6 +101,8 @@ int batch_smash_init(FILE *fp)
             /* parsing error */
             if (ret == EINVAL)
                 fprintf(stderr, "syntax error\n");
+            if (setenv("?", "2", 1) < 0)
+                smash_status = SMASH_ERROR;
             continue;
         }
 
@@ -207,7 +221,11 @@ int smash_launch(struct argument *arg)
     else if (pid == 0)
     {
         /* Child process */
-        signal_restore();
+
+        /* restore signal handlers */
+        if (signal_restore() < 0)
+            exit(EXIT_FAILURE);
+
         /* perform redirections */
 
         /* Set the standard input/output channels of the new process.  */

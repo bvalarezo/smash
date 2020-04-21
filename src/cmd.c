@@ -40,7 +40,7 @@ int smash_fg(int arg_count, char **arg_vector)
 {
     enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS;
-    int job_num, job_status;
+    int job_num;
     struct job_node *j;
     /* check arguments */
     if (arg_count != 2)
@@ -68,15 +68,14 @@ int smash_fg(int arg_count, char **arg_vector)
         goto exit;
     }
     /* check if the job is not DONE or TERM */
-    job_status = j->data.process_status;
-    if (job_status == PROCESS_DONE || job_status == PROCESS_TERMINATED)
+    if (j->data.process_status == PROCESS_DONE || j->data.process_status == PROCESS_TERMINATED)
     {
         fprintf(stderr, "%s: %d: invalid job\n", arg_vector[0], job_num);
         retval = EINVAL;
         goto exit;
     }
     /* wake up the job */
-    if (job_status == PROCESS_STOPPED)
+    if (j->data.process_status == PROCESS_STOPPED)
         kill(j->data.pid, SIGCONT);
 
     /* send the job to the foreground */
@@ -91,7 +90,7 @@ int smash_bg(int arg_count, char **arg_vector)
 {
     enter("%d, %p", arg_count, arg_vector);
     int retval = EXIT_SUCCESS;
-    int job_num, job_status;
+    int job_num;
     struct job_node *j;
     /* check arguments */
     if (arg_count != 2)
@@ -118,9 +117,15 @@ int smash_bg(int arg_count, char **arg_vector)
         retval = EINVAL;
         goto exit;
     }
+    /* check if the job is in the background*/;
+    if (!j->data.arg->background)
+    {
+        fprintf(stderr, "%s: %d: invalid job\n", arg_vector[0], job_num);
+        retval = EINVAL;
+        goto exit;
+    }
     /* check if the job is suspended */
-    job_status = j->data.process_status;
-    if (job_status != PROCESS_STOPPED)
+    if (j->data.process_status != PROCESS_STOPPED)
     {
         fprintf(stderr, "%s: %d: invalid job\n", arg_vector[0], job_num);
         retval = EINVAL;
@@ -166,6 +171,13 @@ int smash_kill(int arg_count, char **arg_vector)
     if (!j)
     {
         fprintf(stderr, "%s: %d: no such job\n", arg_vector[0], job_num);
+        retval = EINVAL;
+        goto exit;
+    }
+    /* check if the job is not DONE or TERM */
+    if (j->data.process_status == PROCESS_DONE || j->data.process_status == PROCESS_TERMINATED)
+    {
+        fprintf(stderr, "%s: %d: invalid job\n", arg_vector[0], job_num);
         retval = EINVAL;
         goto exit;
     }

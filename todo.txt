@@ -13,7 +13,8 @@ do -d flag [DONE]
 consider rework on sync vs async [DONE]
 -sigchld_handler calling waitpid
 fix proper exit codes[DONE]
+README[Done]
+error handling for signal and sigaction[Done]
 
 [TODO]
-README
 test scripts
