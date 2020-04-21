@@ -22,9 +22,6 @@ int smash_init(void)
     }
     while (smash_status == SMASH_RUNNING)
     {
-        /* refresh the jobs */
-        //refresh_jobs();
-
         /* read in the line */
         line = readline(KGRN PROMPT KNRM);
         if (!line)
@@ -67,9 +64,9 @@ int batch_smash_init(FILE *fp)
 {
     enter("%p", fp);
     int smash_status = SMASH_RUNNING, ret;
-    size_t len;
+    size_t len = 0;
     struct argument *arg = NULL;
-    char *line;
+    char *line = NULL, *ptr = NULL;
     /* we need to ignore ^C and ^Z */
     if (signal_init() < 0)
     {
@@ -78,15 +75,18 @@ int batch_smash_init(FILE *fp)
     }
     while (smash_status == SMASH_RUNNING)
     {
-        /* refresh the jobs */
-        //refresh_jobs();
-
+        line = NULL;
+        len = 0;
         /* read in the line */
         if (getline(&line, &len, fp) < 0)
         {
             smash_status = SMASH_EXIT;
             break;
         }
+        /* chip off the \n from getline */
+        if ((ptr = strchr(line, '\n')))
+            *ptr = 0;
+
         /* get the arguments from the line */
         ret = parseline(line, &arg, DELIMITERS);
         if (ret < 0)

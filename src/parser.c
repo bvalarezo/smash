@@ -285,8 +285,10 @@ void destroy_arg(struct argument *arg)
 {
     enter("%p", arg);
     /* free the arg's assets */
-    free(arg->line);
-    free(arg->argv);
+    if (arg->line)
+        free(arg->line);
+    if (arg->argv)
+        free(arg->argv);
     /* close the file descriptors */
     if (arg->fd_stdin != STDIN_FILENO)
         close(arg->fd_stdin);
@@ -295,6 +297,7 @@ void destroy_arg(struct argument *arg)
     if (arg->fd_stderr != STDERR_FILENO)
         close(arg->fd_stderr);
     /* free the arg */
-    free(arg);
+    if (arg)
+        free(arg);
     leave("%s", "void");
 }

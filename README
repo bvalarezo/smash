@@ -235,7 +235,7 @@ If the command had the `&` token set, then the parent process will not hang the 
 
 ^Z will also send a job to the background and mark the background bit.
 
-Background jobs are handled by overwriting the signal handler for `SIGCHLD` using `sigaction(2)`.  **Smash**'s handler will call `waitpid(2)` to reap the child process and return the resources back to the operating system.
+Background jobs are handled in an asynchronus manner by overwriting the signal handler for `SIGCHLD` using `sigaction(2)`.  **Smash**'s handler will call `waitpid(2)` to reap the child process and return the resources back to the operating system.
 
 ```C
 void sigchld_handler(int signal)

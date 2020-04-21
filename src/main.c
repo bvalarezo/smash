@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         retval = EXIT_FAILURE;
         goto fail;
     }
-    if (setenv("SHELL", "smash", 1) < 0)
+    if (setenv("0", "smash", 1) < 0)
     {
         perror(KRED "Failed to set env variable" KNRM);
         retval = EXIT_FAILURE;
@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
         /* interactive mode */
         retval = smash_init();
     }
-    //TODO: convert retval from smash to appropriate exit_codes
     goto exit;
 fail:
     retval = usage(argv[0]);
