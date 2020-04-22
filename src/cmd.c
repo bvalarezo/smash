@@ -259,8 +259,7 @@ int smash_pwd(struct argument *arg)
         retval = errno;
     }
     else
-        printf("%s\n", cwd);
-
+        dprintf(arg->fd_stdout,"%s\n", cwd);
 exit:
     leave("%d", retval);
     return retval;

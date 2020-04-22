@@ -66,4 +66,7 @@ dkms.conf
 # Ignore all local history of files
 .history
 
+## Test dump files ##
+tests/rdump/*
+
 # End of https://www.gitignore.io/api/c,visualstudiocode
