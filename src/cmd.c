@@ -134,9 +134,8 @@ int smash_bg(struct argument *arg)
     /* wake up the job */
     kill(j->data.pid, SIGCONT);
 
-    /* update the status */
-    j->data.process_status = PROCESS_RUNNING;
-    j->data.arg->background = 1;
+    /* wait on the job */
+    wait_job(j, WNOHANG | WCONTINUED);
 
 exit:
     leave("%d", retval);

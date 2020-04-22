@@ -10,8 +10,7 @@ int wait_job(struct job_node *j, int options)
     {
         /* wait for the job to reply */
         wpid = waitpid(j->data.pid, &status, options);
-        // if (wpid)
-        //     break;
+
     } while ((!update_job_status(wpid, status) || is_status(j, PROCESS_RUNNING)) && options != WNOHANG);
     leave("%d", EXIT_SUCCESS);
     return EXIT_SUCCESS;

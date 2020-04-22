@@ -149,7 +149,20 @@ int smash_launch_builtin(int (*builtin_cmd)(struct argument *), struct argument 
     int retval = SMASH_RUNNING, cmd_ret = EXIT_SUCCESS;
     char code[4];
     memset(code, 0, 4);
-
+    
+    /* set up stdin redirection */
+    if (arg->fd_stdin != STDIN_FILENO)
+    {
+        if (dup2(arg->fd_stdin, STDIN_FILENO) < 0)
+        {
+            perror(KRED "Failed to change file descriptors" KNRM);
+            retval = SMASH_ERROR;
+            if (setenv("?", "2", 1) < 0)
+                retval = SMASH_ERROR;
+            goto exit;
+        }
+        close(arg->fd_stdin);
+    }
     /* launch the built in command, setting cmd_ret */
     cmd_ret = builtin_cmd(arg);
     /* get the retval from the builtin */
@@ -163,7 +176,7 @@ int smash_launch_builtin(int (*builtin_cmd)(struct argument *), struct argument 
     debug("$? will be %s", code);
     if (setenv("?", code, 1) < 0)
         retval = SMASH_ERROR;
-
+exit:
     /* free the arg struct */
     destroy_arg(arg);
     leave("%d", retval);

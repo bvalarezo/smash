@@ -50,6 +50,12 @@ int main(int argc, char *argv[])
         retval = EXIT_FAILURE;
         goto fail;
     }
+    if (setenv("?", "0", 1) < 0)
+    {
+        perror(KRED "Failed to set env variable" KNRM);
+        retval = EXIT_FAILURE;
+        goto fail;
+    }
     if (script_file)
     {
         /* test for valid file open */

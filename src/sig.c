@@ -7,9 +7,8 @@ void sigchld_handler(int signal, siginfo_t *info, void *ucontext)
 {
     enter("%d, %p, %p", signal, info, ucontext);
     debug("PID %d sent signal %d", info->si_pid, signal);
-    // struct job_node *j;
     pid_t wpid = 0;
-    int status = 1;
+    int status = 0;
     while ((wpid = waitpid(-1, &status, WNOHANG)) > 0)
     {
         if (update_job_status(wpid, status))

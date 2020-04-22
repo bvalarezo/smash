@@ -1,5 +1,6 @@
 #!/home/bvalarezo/hw3-bvalarezo/smash
-echo "I am some of the built-in commands in smash"
+echo "I am testing some of the built-in commands in smash"
+echo "I am testing some of the built-in commands in smash"
 echo "You should see some debug messages in 3.log"
 sleep 5 &
 kill -19 1
