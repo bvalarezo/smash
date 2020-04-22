@@ -143,47 +143,15 @@ int smash_execute(struct argument *arg)
     return smash_launch(arg);
 }
 
-int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
+int smash_launch_builtin(int (*builtin_cmd)(struct argument *), struct argument *arg)
 {
     enter("%p, %p", builtin_cmd, arg);
     int retval = SMASH_RUNNING, cmd_ret = EXIT_SUCCESS;
-    int infile = arg->fd_stdin, outfile = arg->fd_stdout, errfile = arg->fd_stderr;
     char code[4];
     memset(code, 0, 4);
 
-    /* set up redirection */
-    if (infile != STDIN_FILENO)
-    {
-        if (dup2(infile, STDIN_FILENO) < 0)
-        {
-            perror(KRED "Failed to change file descriptors" KNRM);
-            retval = SMASH_ERROR;
-        }
-        close(infile);
-    }
-    if (outfile != STDOUT_FILENO)
-    {
-        if (dup2(outfile, STDOUT_FILENO) < 0)
-        {
-            perror(KRED "Failed to change file descriptors" KNRM);
-            retval = SMASH_ERROR;
-        }
-        close(outfile);
-    }
-    if (errfile != STDERR_FILENO)
-    {
-        if (dup2(errfile, STDERR_FILENO) < 0)
-        {
-            perror(KRED "Failed to change file descriptors" KNRM);
-            retval = SMASH_ERROR;
-        }
-        close(errfile);
-    }
-    if (retval == SMASH_ERROR)
-        goto exit;
-
     /* launch the built in command, setting cmd_ret */
-    cmd_ret = builtin_cmd(arg->argc, arg->argv);
+    cmd_ret = builtin_cmd(arg);
     /* get the retval from the builtin */
     if (cmd_ret != EXIT_SUCCESS)
         cmd_ret = EXIT_FAILURE + 1;
@@ -195,7 +163,7 @@ int smash_launch_builtin(int (*builtin_cmd)(int, char **), struct argument *arg)
     debug("$? will be %s", code);
     if (setenv("?", code, 1) < 0)
         retval = SMASH_ERROR;
-exit:
+
     /* free the arg struct */
     destroy_arg(arg);
     leave("%d", retval);
@@ -296,7 +264,7 @@ int smash_launch(struct argument *arg)
             /* foreground */
 
             /* wait for the job to report back */
-            wait_job(j);
+            wait_job(j, WUNTRACED);
 
             /* job is back */
         }

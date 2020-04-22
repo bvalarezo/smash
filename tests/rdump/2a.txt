@@ -1,0 +1,6 @@
+job #	pid	status	exit code	command
+[1]	19784	Stopped			sleep 5 &
+[2]	19785	Running			sleep 4 &
+[3]	19786	Running			sleep 3 &
+[4]	19787	Running			sleep 2 &
+[5]	19788	Running			sleep 1 &

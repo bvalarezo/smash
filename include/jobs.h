@@ -42,7 +42,7 @@ struct job_node *push_job(struct job_node *new_job);
 struct job_node *pop_job(struct job_node *node);
 struct job_node *get_job(unsigned int job_id);
 struct job_node *get_job_by_pid(pid_t pid);
-int list_jobs(void);
+int list_jobs(int fd);
 int reap_jobs(void);
 int destroy_all_jobs(void);
 

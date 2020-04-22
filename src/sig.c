@@ -1,13 +1,15 @@
 #include "debug.h"
 #include "wait.h"
+#include "jobs.h"
 #include "sig.h"
 
-void sigchld_handler(int signal)
+void sigchld_handler(int signal, siginfo_t *info, void *ucontext)
 {
-    enter("%d", signal);
-    int status = 0;
+    enter("%d, %p, %p", signal, info, ucontext);
+    debug("PID %d sent signal %d", info->si_pid, signal);
+    // struct job_node *j;
     pid_t wpid = 0;
-    /* wait for any child to reply */
+    int status = 1;
     while ((wpid = waitpid(-1, &status, WNOHANG)) > 0)
     {
         if (update_job_status(wpid, status))
@@ -38,8 +40,8 @@ int signal_init(void)
         .sa_handler = &sigint_handler,
         .sa_flags = 0};
     struct sigaction sigchld_action = {
-        .sa_handler = &sigchld_handler,
-        .sa_flags = 0};
+        .sa_sigaction = &sigchld_handler,
+        .sa_flags = SA_SIGINFO};
     sigemptyset(&sigint_action.sa_mask);
     sigemptyset(&sigchld_action.sa_mask);
     if (sigaction(SIGINT, &sigint_action, NULL) < 0)

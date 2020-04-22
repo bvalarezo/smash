@@ -1,16 +1,18 @@
 #include "debug.h"
 #include "wait.h"
 
-int wait_job(struct job_node *j)
+int wait_job(struct job_node *j, int options)
 {
-    enter("%p", j);
+    enter("%p, %d", j, options);
     int status = 0;
     pid_t wpid = 0;
     do
     {
         /* wait for the job to reply */
-        wpid = waitpid(j->data.pid, &status, WUNTRACED);
-    } while (!update_job_status(wpid, status) && is_status(j, PROCESS_RUNNING));
+        wpid = waitpid(j->data.pid, &status, options);
+        // if (wpid)
+        //     break;
+    } while ((!update_job_status(wpid, status) || is_status(j, PROCESS_RUNNING)) && options != WNOHANG);
     leave("%d", EXIT_SUCCESS);
     return EXIT_SUCCESS;
 }
@@ -30,7 +32,11 @@ int update_job_status(pid_t pid, int status)
         goto exit;
     }
     /* update the status */
-    if (WIFSTOPPED(status))
+    if (WIFCONTINUED(status))
+    {
+        j->data.process_status = PROCESS_RUNNING;
+    }
+    else if (WIFSTOPPED(status))
     {
         j->data.arg->background = 1;
         j->data.process_status = PROCESS_STOPPED;

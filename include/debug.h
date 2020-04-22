@@ -40,7 +40,7 @@ extern int d_flag;
     do                                                        \
     {                                                         \
         if (d_flag)                                           \
-            fprintf(stderr, KBWN msg "\n" KNRM, __VA_ARGS__); \
+            fprintf(stderr, KYLW msg "\n" KNRM, __VA_ARGS__); \
     } while (0)
 
 #endif

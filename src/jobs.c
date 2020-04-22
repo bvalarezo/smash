@@ -127,14 +127,14 @@ struct job_node *get_job_by_pid(pid_t pid)
     return NULL;
 }
 
-int list_jobs(void)
+int list_jobs(int fd)
 {
-    enter("%s", "void");
+    enter("%d", fd);
     /* get the head of the list */
     struct job_node *node = head;
 
     /* print header */
-    fprintf(stdout, "%s\t%s\t%s\t%s\t%s\n", "job #", "pid", "status", "exit code", "command");
+    dprintf(fd, "%s\t%s\t%s\t%s\t%s\n", "job #", "pid", "status", "exit code", "command");
 
     /* check if empty */
     if (!node)
@@ -153,25 +153,25 @@ int list_jobs(void)
         /* print the background job */
         if (node->data.arg->background)
         {
-            fprintf(stdout, JOB_FMT,
+            dprintf(fd, JOB_FMT,
                     node->job_id,
                     node->data.pid);
             /* print the status*/
             if (node->data.process_status == PROCESS_RUNNING)
-                fprintf(stdout, "Running\t");
+                dprintf(fd, "Running\t");
             else if (node->data.process_status == PROCESS_STOPPED)
-                fprintf(stdout, "Stopped\t");
+                dprintf(fd, "Stopped\t");
             else if (node->data.process_status == PROCESS_DONE)
-                fprintf(stdout, "Done\t");
+                dprintf(fd, "Done\t");
             else if (node->data.process_status == PROCESS_TERMINATED)
-                fprintf(stdout, "Terminated\t");
+                dprintf(fd, "Terminated\t");
             /* print the exit code */
             if (node->data.process_status == PROCESS_DONE || node->data.process_status == PROCESS_TERMINATED)
-                fprintf(stdout, "%d\t", node->data.exit_code);
+                dprintf(fd, "%d\t", node->data.exit_code);
             else
-                fprintf(stdout, "\t");
+                dprintf(fd, "\t");
             /* print the command */
-            fprintf(stdout, "\t%s\n", node->data.arg->line);
+            dprintf(fd, "\t%s\n", node->data.arg->line);
         }
     }
     leave("%d", EXIT_SUCCESS);

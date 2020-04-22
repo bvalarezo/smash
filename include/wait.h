@@ -12,7 +12,7 @@
 /* prototypes */
 
 /* wait for the specific job to reply */
-int wait_job(struct job_node *j);
+int wait_job(struct job_node *j, int options);
 
 /* refresh the jobs status */
 int refresh_jobs(void);

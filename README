@@ -47,6 +47,12 @@ make test
 │   ├── smash.c
 │   └── wait.c
 └── tests
+	├── rdump
+	│   ├── *.txt
+	│   └── *.log
+	├── rsrc
+	│   ├── one.sh
+	│   └── wait.c
     ├── test1.sh
     ├── test2.sh
     └── test3.sh
