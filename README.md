@@ -23,6 +23,7 @@ To run the test scripts, run...
 make test
 ```
 ## File Structure
+```
 .
 ├── build
 │   └── *.o
@@ -56,7 +57,7 @@ make test
     ├── test1.sh
     ├── test2.sh
     └── test3.sh
-
+```
 ## Usage
 ### Name
 Smash -  SMAll SHell
